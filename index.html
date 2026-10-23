@@ -111,7 +111,7 @@ html.c{--pm:rgba(255,140,0,.28)}
 .sl{font-size:12px;color:var(--mute);margin:12px 2px 7px}
 .sr{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-radius:0;padding:12px 14px;color:var(--txt);font:inherit;text-align:right}
 .sr+.sr{border-top:1px solid var(--line)}
-.sr>i{flex:none;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-style:normal;font-size:17px;background:color-mix(in srgb,var(--c) 22%,transparent)}
+.sr>i{flex:none;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-style:normal;font-size:17px;background:rgba(139,92,246,.18);background:color-mix(in srgb,var(--c) 22%,transparent)}
 .sr>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.sr b{font-size:14.5px;font-weight:600}.sr small{font-size:11.5px;color:var(--mute)}
 .sr em{font-style:normal;color:var(--mute);font-size:20px}
 .sr.dng b{color:#ff5c7a}
@@ -217,7 +217,7 @@ function calc(){
   const rc=cyc.slice(-6),lens=runs.map(r=>diff(r.e,r.s)+1).filter(n=>n<=10).slice(-6);
   const aC=rc.length?Math.round(avg(rc)):S.c,aP=lens.length?Math.round(avg(lens)):S.p,last=runs[runs.length-1];
   const preds=[],pd=new Set(),fr=new Set(),pm=new Set();
-  if(last)for(let k=1;k<=3;k++){const n=add(last.s,aC*k);preds.push(n);for(let i=0;i<aP;i++)pd.add(add(n,i));for(let i=1;i<=S.pms;i++)pm.add(add(n,-i));const ov=add(n,-14);for(let i=-5;i<=1;i++)fr.add(add(ov,i))}
+  if(last&&!S.preg)for(let k=1;k<=3;k++){const n=add(last.s,aC*k);preds.push(n);for(let i=0;i<aP;i++)pd.add(add(n,i));for(let i=1;i<=S.pms;i++)pm.add(add(n,-i));const ov=add(n,-14);for(let i=-5;i<=1;i++)fr.add(add(ov,i))}
   return{runs,cyc:rc,aC,aP,last,preds,pd,fr,pm};
 }
 
@@ -225,7 +225,7 @@ function hero(C){
   const t=today();let big,sub,ph='—',nx='—',ov2='';
   if(!C.last){big='ثبت اولین روز';sub='با ثبت پریودت، پیش‌بینی‌ها شروع می‌شن'}
   else{
-    const day=diff(t,C.last.s)+1,np=C.preds.find(p=>diff(p,t)>=0),late=diff(t,C.preds[0]);
+    const day=diff(t,C.last.s)+1,np=!S.preg&&C.preds.find(p=>diff(p,t)>=0),late=C.preds.length?diff(t,C.preds[0]):0;
     const inP=S.days[t]&&S.days[t].p;
     if(late>0&&!inP){big=fa(late)+' روز تأخیر';sub='نسبت به پیش‌بینی'}
     else if(np){const n=diff(np,t);big=n===0?'امروز':fa(n)+' روز';sub=n===0?'پریود بعدی طبق پیش‌بینی':'تا پریود بعدی'}
@@ -254,9 +254,9 @@ function stats(C){
   (n?`<div class="bars">${C.cyc.map(v=>`<div><i style="height:${v/mx*70}px"></i>${fa(v)}</div>`).join('')}</div><div class="note" style="margin-top:6px">طول چرخه‌های اخیر (روز)</div>`:'<div class="note">بعد از ثبت دو پریود، نمودار چرخه‌ها اینجا میاد.</div>');
 }
 const esc=x=>String(x).replace(/[<>&"]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
-function warn(C){let m='';const t=today(),np=C.preds.find(p=>diff(p,t)>=0),n=np?diff(np,t):null,rc=C.cyc.slice(-4);
+function warn(C){let m='';const t=today(),np=!S.preg&&C.preds.find(p=>diff(p,t)>=0),n=np?diff(np,t):null,rc=C.cyc.slice(-4);
   if(rc.length>=2&&(Math.min(...rc)<21||Math.max(...rc)>38||Math.max(...rc)-Math.min(...rc)>=10))m='⚠️ طول چرخه‌هات اخیراً خیلی تغییر کرده یا غیرمعمول بوده. اگه ادامه داشت، با پزشک مشورت کن.';
-  else if(C.last&&diff(t,C.preds[0])>=10&&!(S.days[t]&&S.days[t].p))m='⚠️ بیش از 10 روز از زمان پیش‌بینی گذشته. اگه نگرانی، با پزشک مشورت کن.';
+  else if(!S.preg&&C.last&&C.preds.length&&diff(t,C.preds[0])>=10&&!(S.days[t]&&S.days[t].p))m='⚠️ بیش از 10 روز از زمان پیش‌بینی گذشته. اگه نگرانی، با پزشک مشورت کن.';
   else if(C.pm.has(t))m='🌙 در دوره‌ی PMS هستی؛ ممکنه خلق، انرژی و اشتهات تغییر کنه.';
   else if(n!==null&&n<=3)m='🔔 پریود بعدی '+(n?'تقریباً '+fa(n)+' روز دیگه':'طبق پیش‌بینی امروز')+' است.';
   $('warn').innerHTML=m?`<div class="card" style="font-size:13px;line-height:1.8">${m}</div>`:'';
@@ -298,7 +298,7 @@ $('mc').onclick=e=>{const b=e.target.closest('[data-m]');if(b){E.m=E.m===b.datas
 $('sc').onclick=e=>{const b=e.target.closest('[data-s]');if(b){E.s=sel(E.s||[],b.dataset.s);sheetUI()}};
 $('xc').onclick=e=>{const b=e.target.closest('[data-x]');if(b){E.x=sel(E.x||[],b.dataset.x);sheetUI()}};
 $('pn').oninput=()=>{E.pn=+$('pn').value;$('pv2').textContent=fa(E.pn)};
-$('ds').onclick=()=>{E.n=$('nt').value.trim();const o={};if(E.p){o.p=1;o.f=E.f||2}if(E.m)o.m=E.m;if(E.s&&E.s.length)o.s=E.s;if(E.n)o.n=E.n;{const pn=+$('pn').value,w=+$('wt').value,tp=+$('tp').value,md=$('md').value.trim();if(pn)o.pn=pn;if(w)o.w=w;if(tp)o.tp=tp;if(md)o.md=md;if(E.x&&E.x.length)o.x=E.x}
+$('ds').onclick=()=>{E.n=$('nt').value.trim();const o={};if(E.p){o.p=1;o.f=E.f||2}if(E.m)o.m=E.m;if(E.s&&E.s.length)o.s=E.s;if(E.n)o.n=E.n;{const pn=Number($('pn').value),w=Number($('wt').value),tp=Number($('tp').value),md=$('md').value.trim();if(Number.isFinite(pn)&&pn>0)o.pn=pn;if(Number.isFinite(w)&&w>0)o.w=w;if(Number.isFinite(tp)&&tp>0)o.tp=tp;if(md)o.md=md;if(E.x&&E.x.length)o.x=E.x}
   if(Object.keys(o).length)S.days[cur]=o;else delete S.days[cur];save();$('dbg').classList.remove('open');render()};
 $('dc').onclick=()=>$('dbg').classList.remove('open');
 $('start').onclick=()=>{const t=today();S.days[t]=Object.assign({},S.days[t],{p:1,f:(S.days[t]||{}).f||2});save();render()};
@@ -319,7 +319,7 @@ $('ss').onclick=()=>{S.c=Math.min(45,Math.max(20,+$('sc1').value||28));S.p=Math.
 $('ex').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='gol-roz-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();msg('بکاپ ذخیره شد.')};
 $('im').onclick=()=>$('fi').click();
 $('fi').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(!o||typeof o.days!=='object')throw 0;if(!confirm('اطلاعات فعلی با فایل بکاپ جایگزین شود؟'))return;S={days:o.days,c:+o.c||28,p:+o.p||5,pms:+o.pms||7,preg:!!o.preg};save();render();msg('بازیابی شد.')}catch(x){msg('فایل بکاپ معتبر نیست.')}e.target.value=''};
-$('wipe').onclick=()=>{if(confirm('همه‌ی اطلاعات پاک شود؟ این کار قابل بازگشت نیست.')){S={days:{},c:28,p:5,pms:7};save();render();$('sbg').classList.remove('open')}};
+$('wipe').onclick=()=>{if(confirm('همه‌ی اطلاعات پاک شود؟ این کار قابل بازگشت نیست.')){S={days:{},c:28,p:5,pms:7,preg:false};save();render();$('sbg').classList.remove('open')}};
 
 $('pgt').onclick=()=>{S.preg=!S.preg;save();$('pgt').classList.toggle('on',!!S.preg);render()};
 $('rp').onclick=()=>{report();$('sbg').classList.remove('open');$('rbg').classList.add('open')};
