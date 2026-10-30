@@ -1,9 +1,14 @@
--- Run this once in Supabase Dashboard > SQL Editor
+-- Run once in Supabase Dashboard > SQL Editor for each project used by Goleroz.
+-- Use only the Project URL and anon/public key in the browser; never use service_role.
 create table if not exists public.cloud_backups (
   user_id uuid primary key references auth.users(id) on delete cascade,
+  rev integer not null default 1,
   payload text not null,
   updated_at timestamptz not null default now()
 );
+
+-- Safe migration for an existing Goleroz table; preserves any saved encrypted backups.
+alter table public.cloud_backups add column if not exists rev integer not null default 1;
 
 alter table public.cloud_backups enable row level security;
 
