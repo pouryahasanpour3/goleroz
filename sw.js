@@ -1,4 +1,4 @@
-const CACHE='golroz-v3';
+const CACHE='golroz-v4';
 const FILES=['./','./index.html','./manifest.json','./sync.js','./supabase-schema.sql'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
