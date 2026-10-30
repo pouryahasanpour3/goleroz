@@ -29,7 +29,7 @@ function statusText(){
   if(!cfgOk())return txt('پروژه‌ی Supabase را تنظیم کن','Set up a Supabase project');
   if(!auth)return txt('ورود با ایمیل برای همگام‌سازی','Sign in to sync');
   if(status.s==='syncing')return txt('در حال همگام‌سازی…','Syncing…');
-  if(status.s==='error')return '⚠️ '+(status.m||txt('خطا','Error'));
+  if(status.s==='error')return txt('خطا: ','Error: ')+(status.m||txt('خطا','Error'));
   if(status.s==='off')return txt('نشست تمام شده؛ دوباره وارد شو','Session expired; sign in again');
   if(status.t)return txt('همگام · آخرین: ','Synced · Last: ')+new Date(status.t).toLocaleTimeString(txt('fa-IR','en-US'),{hour:'2-digit',minute:'2-digit'});
   return txt('آماده‌ی همگام‌سازی','Ready to sync');
@@ -163,7 +163,8 @@ async function sync(){
 
 /* Supabase setup, login and sync controls. */
 const panel=document.createElement('div');panel.className='bg';panel.id='gol-sync-panel';
-panel.innerHTML='<div class="sheet" style="max-height:92vh;overflow:auto"><h2>'+txt('☁️ همگام‌سازی آنلاین','☁️ Online sync')+'</h2><div id="gs-body"></div><div class="msg" id="gs-feedback"></div><button class="btn s" id="gs-close" style="margin-top:12px">'+txt('بستن','Close')+'</button></div>';
+panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','gs-title');
+panel.innerHTML='<div class="sheet sync-sheet"><div class="shd"><div class="settings-heading"><span class="settings-mark"><svg class="ui-icon" aria-hidden="true"><use href="#i-cloud"></use></svg></span><div><h2 id="gs-title">'+txt('همگام‌سازی آنلاین','Online sync')+'</h2><p>'+txt('داده‌ها روی دستگاهت می‌مانند و نسخه‌ی همگام‌شده رمزگذاری می‌شود.','Your data stays on this device; synced copies are encrypted.')+'</p></div></div><button class="ib" id="gs-close" type="button" aria-label="'+txt('بستن','Close')+'"><svg class="ui-icon" aria-hidden="true"><use href="#i-close"></use></svg></button></div><div id="gs-body"></div><div class="msg" id="gs-feedback" role="status" aria-live="polite"></div></div>';
 document.body.appendChild(panel);
 const input=(id,ph,type='text',value='')=>'<input id="'+id+'" type="'+type+'" placeholder="'+esc(ph)+'" value="'+esc(value)+'" dir="ltr" autocomplete="off" style="margin:0 0 8px;width:100%">';
 function ui(){
@@ -177,7 +178,7 @@ function ui(){
   }
   const body=g('gs-body');if(body)body.innerHTML=h;drawStatus();
 }
-function openPanel(){ui();panel.classList.add('open')}
+function openPanel(){ui();panel.classList.add('open');g('gs-close')?.focus()}
 function rememberPassword(pass){const cb=g('gs-remember');if(cb&&cb.checked)ls(K_PASS,pass);else ls(K_PASS,null)}
 async function authCall(kind){
   const email=g('gs-email')?.value.trim(),password=g('gs-password')?.value;
